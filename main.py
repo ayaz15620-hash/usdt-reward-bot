@@ -1,14 +1,26 @@
+
 import os
-from telegram import Update, ReplyKeyboardMarkup
+
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
 )
 
 TOKEN = os.getenv("BOT_TOKEN")
+
+# Your Force Join Channel
+CHANNEL_USERNAME = "@Ayaz_USDT_Official"
+CHANNEL_LINK = "https://t.me/Ayaz_USDT_Official"
 
 MENU = [
     ["🎁 Daily Bonus", "💰 My Balance"],
@@ -16,44 +28,35 @@ MENU = [
     ["💸 Withdraw"],
 ]
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = ReplyKeyboardMarkup(MENU, resize_keyboard=True)
 
-    await update.message.reply_text(
-        "👋 Welcome to Ayaz USDT Rewards Bot!\n\n"
-        "Complete tasks and earn rewards.\n"
-        "👇 Select an option below:",
-        reply_markup=keyboard,
-    )
-
-async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    messages = {
-        "🎁 Daily Bonus": "🎁 Daily Bonus feature is coming soon!",
-        "💰 My Balance": "💰 Your balance: 0.000 USDT",
-        "👥 Refer & Earn": "👥 Referral system is coming soon!",
-        "📋 Earn Tasks": "📋 Tasks will appear here soon!",
-        "💸 Withdraw": "💸 Withdrawal system is coming soon!",
-    }
-
-    await update.message.reply_text(
-        messages.get(
-            update.message.text,
-            "Please select an option from the menu.",
+async def check_membership(user_id, context):
+    """Check whether the user has joined the required channel."""
+    try:
+        member = await context.bot.get_chat_member(
+            CHANNEL_USERNAME,
+            user_id,
         )
-    )
+        return member.status not in ("left", "kicked")
+    except Exception:
+        return False
 
-def main():
-    if not TOKEN:
-        raise ValueError("BOT_TOKEN is not set!")
 
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, menu_handler)
-    )
+async def send_join_message(message):
+    """Show the Force Join buttons."""
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "📢 Join Our Channel",
+                url=CHANNEL_LINK,
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "✅ I Have Joined",
+                callback_data="check_join",
+            )
+        ],
+    ])
 
-    print("Bot is running...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    await message.reply_text(
+        "📢 To use this bot, please join our official channel
